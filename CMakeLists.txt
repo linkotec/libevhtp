@@ -90,7 +90,13 @@ message("Std CFLAGS: ${CMAKE_C_FLAGS}")
 message("Dbg CFLAGS: ${CMAKE_C_FLAGS_DEBUG}")
 message("Rel CFLAGS: ${CMAKE_C_FLAGS_RELEASE}")
 
-find_package(LibEvent REQUIRED)
+if (NOT LIBEVENT_INCLUDE_DIRS)
+	find_package(LibEvent REQUIRED)
+	find_path(LIBEVENT_INCLUDE_DIR event2/event.h REQUIRED)
+else()
+	set (LIBEVENT_INCLUDE_DIR ${LIBEVENT_INCLUDE_DIRS})
+	set (LIBEVENT_LIBRARY event)
+endif()
 
 if (NOT LIBEVENT_OPENSSL_LIBRARY)
 	set (EVHTP_DISABLE_SSL ON)
@@ -99,8 +105,6 @@ endif()
 if (NOT EVHTP_DISABLE_SSL)
 	find_package(OpenSSL)
 endif()
-
-find_path(LIBEVENT_INCLUDE_DIR event2/event.h REQUIRED)
 
 if (NOT EVHTP_DISABLE_REGEX)
 	find_library(HAS_SYS_ONIG onig)
