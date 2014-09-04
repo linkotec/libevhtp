@@ -111,7 +111,7 @@ if (NOT EVHTP_DISABLE_REGEX)
 endif()
 
 if (NOT OPENSSL_FOUND)
-	message("Diabling SSL")
+	message("Disabling SSL")
 	set (EVHTP_DISABLE_SSL ON)
 	set (OPENSSL_CRYPTO_LIBRARY "")
 	set (OPENSSL_INCLUDE_DIR "")
