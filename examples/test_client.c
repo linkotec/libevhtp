@@ -56,6 +56,11 @@ main(int argc, char ** argv) {
     evhtp_connection_t * conn;
     evhtp_request_t    * request;
 
+#ifdef _WIN32
+    WSADATA WSAData;
+    WSAStartup(MAKEWORD(2,2), &WSAData);
+#endif
+
     evbase  = event_base_new();
     conn    = evhtp_connection_new(evbase, "75.126.169.52", 80);
     request = evhtp_request_new(request_cb, evbase);

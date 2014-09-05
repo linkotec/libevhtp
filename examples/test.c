@@ -540,6 +540,11 @@ main(int argc, char ** argv) {
     evhtp_callback_t * cb_11  = NULL;
     evhtp_callback_t * cb_12  = NULL;
 
+#ifdef _WIN32
+    WSADATA WSAData;
+    WSAStartup(MAKEWORD(2,2), &WSAData);
+#endif
+
     if (parse_args(argc, argv) < 0) {
         exit(1);
     }

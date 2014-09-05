@@ -15,8 +15,16 @@ testcb(evhtp_request_t * req, void * a) {
 
 int
 main(int argc, char ** argv) {
-    evbase_t * evbase = event_base_new();
-    evhtp_t  * htp    = evhtp_new(evbase, NULL);
+    evbase_t * evbase;
+	evhtp_t  * htp;
+
+#ifdef _WIN32
+    WSADATA WSAData;
+    WSAStartup(MAKEWORD(2,2), &WSAData);
+#endif
+
+    evbase = event_base_new();
+    htp    = evhtp_new(evbase, NULL);
 
     evhtp_set_cb(htp, "/simple/", testcb, "simple");
     evhtp_set_cb(htp, "/1/ping", testcb, "one");
