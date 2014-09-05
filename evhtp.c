@@ -211,24 +211,24 @@ status_code_to_str(evhtp_res code) {
  * @brief callback definitions for request processing from libhtparse
  */
 static htparse_hooks request_psets = {
-    .on_msg_begin       = _evhtp_request_parser_start,
-    .method             = NULL,
-    .scheme             = NULL,
-    .host               = NULL,
-    .port               = NULL,
-    .path               = _evhtp_request_parser_path,
-    .args               = _evhtp_request_parser_args,
-    .uri                = NULL,
-    .on_hdrs_begin      = _evhtp_request_parser_headers_start,
-    .hdr_key            = _evhtp_request_parser_header_key,
-    .hdr_val            = _evhtp_request_parser_header_val,
-    .hostname           = _evhtp_request_parser_hostname,
-    .on_hdrs_complete   = _evhtp_request_parser_headers,
-    .on_new_chunk       = _evhtp_request_parser_chunk_new,
-    .on_chunk_complete  = _evhtp_request_parser_chunk_fini,
-    .on_chunks_complete = _evhtp_request_parser_chunks_fini,
-    .body               = _evhtp_request_parser_body,
-    .on_msg_complete    = _evhtp_request_parser_fini
+    _evhtp_request_parser_start,         /* on_msg_begin */
+    NULL,                                /* method */
+    NULL,                                /* scheme */
+    NULL,                                /* host */
+    NULL,                                /* port */
+    _evhtp_request_parser_path,          /* path */
+    _evhtp_request_parser_args,          /* args */
+    NULL,                                /* uri */
+    _evhtp_request_parser_headers_start, /* on_hdrs_begin */
+    _evhtp_request_parser_header_key,    /* hdr_key */
+    _evhtp_request_parser_header_val,    /* hdr_val */
+    _evhtp_request_parser_hostname,      /* hostname */
+    _evhtp_request_parser_headers,       /* on_hdrs_complete */
+    _evhtp_request_parser_chunk_new,     /* on_new_chunk */
+    _evhtp_request_parser_chunk_fini,    /* on_chunk_complete */
+    _evhtp_request_parser_chunks_fini,   /* on_chunks_complete */
+    _evhtp_request_parser_body,          /* body */
+    _evhtp_request_parser_fini	         /* on_msg_complete */
 };
 
 #ifndef EVHTP_DISABLE_SSL
@@ -2277,11 +2277,11 @@ evhtp_kvs_add_kv(evhtp_kvs_t * kvs, evhtp_kv_t * kv) {
 
 void
 evhtp_kvs_add_kvs(evhtp_kvs_t * dst, evhtp_kvs_t * src) {
+    evhtp_kv_t * kv;
+
     if (dst == NULL || src == NULL) {
         return;
     }
-
-    evhtp_kv_t * kv;
 
     TAILQ_FOREACH(kv, src, next) {
         evhtp_kvs_add_kv(dst, evhtp_kv_new(kv->key, kv->val, kv->k_heaped, kv->v_heaped));
