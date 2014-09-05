@@ -16,6 +16,10 @@
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
+#ifndef atoll
+#define atoll _atoi64
+#endif
+
 #ifndef inline
 #define inline __inline
 #endif

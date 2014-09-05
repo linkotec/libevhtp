@@ -1,19 +1,36 @@
+#include <evhtp-internal.h>
 #include <evhtp.h>
 #include <event2/event.h>
 
 #include <stdio.h>
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 #include <errno.h>
 #include <signal.h>
+
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
+
 #include <time.h>
+
+#ifndef HAVE_GETOPT
+#include <compat/getopt.h>
+#endif
+
+#ifndef PRId64
+#ifdef _MSC_VER
+#define PRId64 "I64d"
+#else
+#define PRId64 "lld"
+#endif
+#endif
 
 #ifndef EVHTP_DISABLE_EVTHR
 int      use_threads    = 0;
@@ -165,7 +182,8 @@ create_callback(evhtp_request_t * r, void * arg) {
     urilen = strlen(uri);
 
     if (urilen == 0) {
-        return evhtp_send_reply(r, EVHTP_RES_BADREQ);
+        evhtp_send_reply(r, EVHTP_RES_BADREQ);
+        return;
     }
 
     nuri = calloc(urilen + 2, 1);

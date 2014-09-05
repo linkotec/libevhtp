@@ -9,6 +9,14 @@
 #include <inttypes.h>
 #endif
 
+#ifndef PRIu64
+#ifdef _MSC_VER
+#define PRIu64 "I64u"
+#else
+#define PRIu64 "llu"
+#endif
+#endif
+
 static void
 request_cb(evhtp_request_t * req, void * arg) {
     printf("hi %zu\n", evbuffer_get_length(req->buffer_in));
