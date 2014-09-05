@@ -4,8 +4,12 @@
 #include <stdint.h>
 #include <errno.h>
 #include <signal.h>
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
+#endif
+#ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
+#endif
 #ifndef WIN32
 #include <sys/socket.h>
 #include <netinet/in.h>

@@ -5,7 +5,9 @@
 #include <string.h>
 #include <stdint.h>
 #include <errno.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include "htparse.h"
 #include "evhtp-internal.h"

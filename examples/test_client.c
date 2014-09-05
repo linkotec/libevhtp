@@ -1,10 +1,13 @@
+#include <evhtp.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 #include <errno.h>
+#ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
-#include <evhtp.h>
+#endif
 
 static void
 request_cb(evhtp_request_t * req, void * arg) {

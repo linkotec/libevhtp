@@ -4,11 +4,18 @@
 #undef EVHTP_DISABLE_EVTHR
 #undef EVHTP_DISABLE_REGEX
 #undef EVHTP_DISABLE_SSL
-#undef EVHTP_DISABLE_EVTHR
 
 #cmakedefine EVHTP_DISABLE_EVTHR
 #cmakedefine EVHTP_DISABLE_REGEX
 #cmakedefine EVHTP_DISABLE_SSL
-#cmakedefine EVHTP_DISABLE_EVTHR
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#cmakedefine HAVE_INTTYPES_H 1
+
+/* Define to 1 if you have the <strings.h> header file. */
+#cmakedefine HAVE_STRINGS_H 1
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#cmakedefine HAVE_UNISTD_H 1
 
 #endif
