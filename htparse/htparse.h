@@ -1,11 +1,15 @@
 #ifndef __HTPARSE_H__
 #define __HTPARSE_H__
 
-#ifdef EVHTP__HAVE_INTTYPES_H
+#ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
+
 #include <stddef.h>
+
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
 
 struct htparser;
 

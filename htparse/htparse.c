@@ -1,16 +1,19 @@
+#include "evhtp-internal.h"
+#include "evhtp-config.h"
+#include "htparse.h"
+
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-
-#include "htparse.h"
-#include "evhtp-internal.h"
 
 #ifdef PARSER_DEBUG
 #define __QUOTE(x)                  # x

@@ -1,7 +1,13 @@
 #define _GNU_SOURCE
+#include "evhtp-internal.h"
+#include "evhtp-config.h"
+#include "evhtp.h"
+
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
 #include <errno.h>
 #include <signal.h>
 #ifdef HAVE_STRINGS_H
@@ -16,18 +22,17 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #else
+#ifndef WINVER
 #define WINVER 0x0501
+#endif
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #endif
-#ifndef NO_SYS_UN
+#ifdef HAVE_SYS_UN
 #include <sys/un.h>
 #endif
 
 #include <limits.h>
-
-#include "evhtp-internal.h"
-#include "evhtp.h"
 
 static int                  _evhtp_request_parser_start(htparser * p);
 static int                  _evhtp_request_parser_path(htparser * p, const char * data, size_t len);
@@ -244,7 +249,7 @@ static int             ssl_locks_initialized = 0;
  * COMPAT FUNCTIONS
  */
 
-#ifdef NO_STRNLEN
+#ifndef HAVE_STRNLEN
 static size_t
 strnlen(const char * s, size_t maxlen) {
     const char * e;
@@ -259,7 +264,7 @@ strnlen(const char * s, size_t maxlen) {
 
 #endif
 
-#ifdef NO_STRNDUP
+#ifndef HAVE_STRNDUP
 static char *
 strndup(const char * s, size_t n) {
     size_t len = strnlen(s, n);
@@ -2862,7 +2867,7 @@ evhtp_bind_socket(evhtp_t * htp, const char * baddr, uint16_t port, int backlog)
     struct sockaddr_in  sin;
     struct sockaddr_in6 sin6;
 
-#ifndef NO_SYS_UN
+#ifdef HAVE_SYS_UN
     struct sockaddr_un sun;
 #endif
     struct sockaddr  * sa;
@@ -2881,7 +2886,7 @@ evhtp_bind_socket(evhtp_t * htp, const char * baddr, uint16_t port, int backlog)
         evutil_inet_pton(AF_INET6, baddr, &sin6.sin6_addr);
         sa = (struct sockaddr *)&sin6;
     } else if (!strncmp(baddr, "unix:", 5)) {
-#ifndef NO_SYS_UN
+#ifdef HAVE_SYS_UN
         baddr += 5;
 
         if (strlen(baddr) >= sizeof(sun.sun_path)) {
