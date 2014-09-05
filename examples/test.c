@@ -13,6 +13,7 @@
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
+#include <time.h>
 
 #ifndef EVHTP_DISABLE_EVTHR
 int      use_threads    = 0;
