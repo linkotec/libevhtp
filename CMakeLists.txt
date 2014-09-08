@@ -87,10 +87,6 @@ if (NOT EVHTP_DISABLE_SSL)
 	find_package(OpenSSL)
 endif()
 
-if (NOT EVHTP_DISABLE_REGEX)
-	find_library(HAS_SYS_ONIG onig)
-endif()
-
 if (NOT OPENSSL_FOUND)
 	message("Disabling SSL")
 	set (EVHTP_DISABLE_SSL ON)
@@ -100,64 +96,31 @@ if (NOT OPENSSL_FOUND)
 	set (LIBEVENT_OPENSSL_LIBRARY "")
 endif()
 
-if (NOT EVHTP_DISABLE_REGEX)
-	if (NOT HAS_SYS_ONIG)
-		CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/oniguruma/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/oniguruma/config.h)
-		set(ONIG_SOURCES
-			oniguruma/regerror.c
-			oniguruma/regparse.c
-			oniguruma/regext.c
-			oniguruma/regcomp.c
-			oniguruma/regexec.c
-			oniguruma/reggnu.c
-			oniguruma/regenc.c
-			oniguruma/regsyntax.c
-			oniguruma/regtrav.c
-			oniguruma/regversion.c
-			oniguruma/st.c
-			oniguruma/regposix.c
-			oniguruma/regposerr.c
-			oniguruma/enc/unicode.c
-			oniguruma/enc/ascii.c
-			oniguruma/enc/utf8.c
-			oniguruma/enc/utf16_be.c
-			oniguruma/enc/utf16_le.c
-			oniguruma/enc/utf32_be.c
-			oniguruma/enc/utf32_le.c
-			oniguruma/enc/euc_jp.c
-			oniguruma/enc/sjis.c
-			oniguruma/enc/iso8859_1.c
-			oniguruma/enc/iso8859_2.c
-			oniguruma/enc/iso8859_3.c
-			oniguruma/enc/iso8859_4.c
-			oniguruma/enc/iso8859_5.c
-			oniguruma/enc/iso8859_6.c
-			oniguruma/enc/iso8859_7.c
-			oniguruma/enc/iso8859_8.c
-			oniguruma/enc/iso8859_9.c
-			oniguruma/enc/iso8859_10.c
-			oniguruma/enc/iso8859_11.c
-			oniguruma/enc/iso8859_13.c
-			oniguruma/enc/iso8859_14.c
-			oniguruma/enc/iso8859_15.c
-			oniguruma/enc/iso8859_16.c
-			oniguruma/enc/euc_tw.c
-			oniguruma/enc/euc_kr.c
-			oniguruma/enc/big5.c
-			oniguruma/enc/gb18030.c
-			oniguruma/enc/koi8_r.c
-			oniguruma/enc/cp1251.c)
-		set (ONIG_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/oniguruma;${CMAKE_CURRENT_SOURCE_DIR}/oniguruma)
-	else()
-		message("-- Using system libonig")
-		set(ONIG_SOURCES "")
-		set(ONIG_LIBS ${HAS_SYS_ONIG})
-		set(ONIG_INCLUDE_DIR "")
-	endif(NOT HAS_SYS_ONIG)
-else()
-	set(ONIG_SOURCES "")
-	set(ONIG_LIBS "")
-	set(ONIG_INCLUDE_DIR "")
+set(LIBEVHTP_EXTERNAL_LIBS
+	${LIBEVENT_LIBRARY}
+	${LIBEVENT_PTHREADS_LIBRARY}
+	${LIBEVENT_OPENSSL_LIBRARY}
+	${OPENSSL_LIBRARIES}
+)
+
+if(NOT EVHTP_DISABLE_REGEX)
+    find_package(Oniguruma)
+
+    if(ONIGURUMA_FOUND)
+        message("-- Using system libonig")
+        
+        list(APPEND LIBEVHTP_EXTERNAL_INCLUDE_DIRS ${ONIGURUMA_INCLUDE_DIRS})
+        list(APPEND LIBEVHTP_EXTERNAL_LIBS ${ONIGURUMA_LIBRARIES})
+    else()
+       add_subdirectory(oniguruma)
+        
+       list(APPEND LIBEVHTP_EXTERNAL_INCLUDE_DIRS
+            ${CMAKE_CURRENT_BINARY_DIR}/oniguruma
+            ${CMAKE_CURRENT_SOURCE_DIR}/oniguruma
+        )
+        
+        list(APPEND LIBEVHTP_EXTERNAL_LIBS libonig)
+    endif()
 endif()
 
 include_directories(
@@ -165,17 +128,9 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/htparse
 	${CMAKE_CURRENT_SOURCE_DIR}/evthr
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${ONIG_INCLUDE_DIR}
 	${OPENSSL_INCLUDE_DIR}
 	${LIBEVENT_INCLUDE_DIR}
-)
-
-set(LIBEVHTP_EXTERNAL_LIBS
-		${LIBEVENT_LIBRARY}
-		${LIBEVENT_PTHREADS_LIBRARY}
-		${LIBEVENT_OPENSSL_LIBRARY}
-		${OPENSSL_LIBRARIES}
-		${ONIG_LIBS}
+	${LIBEVHTP_EXTERNAL_INCLUDE_DIRS}
 )
 
 if (NOT ${LIBEVENT_PTHREADS_FOUND})
@@ -233,7 +188,7 @@ configure_file(
 	${CMAKE_CURRENT_SOURCE_DIR}/evhtp-config.h.in
 	${CMAKE_CURRENT_BINARY_DIR}/evhtp-config.h)
 
-add_library(libevhtp ${EVHTP_LIBTYPE} ${LIBEVHTP_SOURCES} ${ONIG_SOURCES})
+add_library(libevhtp ${EVHTP_LIBTYPE} ${LIBEVHTP_SOURCES})
 
 set_target_properties(libevhtp PROPERTIES OUTPUT_NAME "evhtp")
 target_link_libraries(libevhtp ${LIBEVHTP_EXTERNAL_LIBS})
@@ -279,17 +234,14 @@ if (NOT EVHTP_DISABLE_EVTHR)
 	install (FILES evthr/evthr.h DESTINATION ${INCLUDE_INSTALL_DIR})
 endif()
 
-# oniguruma/onigposix.h
-
 if (NOT EVHTP_DISABLE_REGEX)
-		if (NOT HAS_SYS_ONIG)
-				install (FILES oniguruma/onigposix.h DESTINATION ${INCLUDE_INSTALL_DIR})
-		endif()
+	if (NOT ONIGURUMA_FOUND)
+		install (FILES oniguruma/onigposix.h DESTINATION ${INCLUDE_INSTALL_DIR})
+	endif()
 endif()
 
 IF (WIN32)
    install (FILES compat/sys/queue.h DESTINATION ${INCLUDE_INSTALL_DIR}/sys)
-   install (FILES oniguruma/onigposix.h DESTINATION ${INCLUDE_INSTALL_DIR})
 ENDIF (WIN32)
 
 configure_file(
