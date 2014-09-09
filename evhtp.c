@@ -34,6 +34,10 @@
 
 #include <limits.h>
 
+#ifndef EVHTP_DISABLE_REGEX
+#include <onigposix.h>
+#endif
+
 static int                  _evhtp_request_parser_start(htparser * p);
 static int                  _evhtp_request_parser_path(htparser * p, const char * data, size_t len);
 static int                  _evhtp_request_parser_args(htparser * p, const char * data, size_t len);
@@ -600,11 +604,16 @@ _evhtp_callback_find(evhtp_callbacks_t * cbs,
                 break;
 #ifndef EVHTP_DISABLE_REGEX
             case evhtp_callback_type_regex:
-                if (regexec(callback->val.regex, path, callback->val.regex->re_nsub + 1, pmatch, 0) == 0) {
-                    *start_offset = pmatch[callback->val.regex->re_nsub].rm_so;
-                    *end_offset   = pmatch[callback->val.regex->re_nsub].rm_eo;
+                {
+                    regex_t *regex = (regex_t*) callback->val.regex;
 
-                    return callback;
+                    if (regexec(regex, path, 
+                        regex->re_nsub + 1, pmatch, 0) == 0) {
+                            *start_offset = pmatch[regex->re_nsub].rm_so;
+                            *end_offset   = pmatch[regex->re_nsub].rm_eo;
+
+                            return callback;
+                    }
                 }
 
                 break;

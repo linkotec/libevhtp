@@ -9,10 +9,6 @@
 
 #include <htparse.h>
 
-#ifndef EVHTP_DISABLE_REGEX
-#include <onigposix.h>
-#endif
-
 #include <sys/queue.h>
 #include <event2/event.h>
 #include <event2/listener.h>
@@ -323,7 +319,7 @@ struct evhtp_callback_s {
         char * path;
         char * glob;
 #ifndef EVHTP_DISABLE_REGEX
-        regex_t * regex;
+        void * regex;
 #endif
     } val;
 
