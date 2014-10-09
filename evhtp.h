@@ -106,15 +106,16 @@ enum evhtp_hook_type {
     evhtp_hook_on_error,        /**< type which defines to hook whenever an error occurs */
     evhtp_hook_on_hostname,
     evhtp_hook_on_write,
-    evhtp_hook_on_event
+    evhtp_hook_on_event,
+    evhtp_hook_on_conn_error,   /**< type which defines to hook whenever a connection error occurs */
 };
 
 enum evhtp_callback_type {
     evhtp_callback_type_hash,
+    evhtp_callback_type_glob,
 #ifndef EVHTP_DISABLE_REGEX
     evhtp_callback_type_regex,
 #endif
-    evhtp_callback_type_glob
 };
 
 enum evhtp_proto {
@@ -142,6 +143,7 @@ typedef void (*evhtp_hook_event_cb)(evhtp_connection_t * conn, short events, voi
 /* Generic hook for passing ISO tests */
 typedef evhtp_res (*evhtp_hook)();
 
+typedef evhtp_res (*evhtp_hook_conn_err_cb)(evhtp_connection_t * connection, evhtp_error_flags errtype, void * arg);
 typedef evhtp_res (*evhtp_pre_accept_cb)(evhtp_connection_t * conn, void * arg);
 typedef evhtp_res (*evhtp_post_accept_cb)(evhtp_connection_t * conn, void * arg);
 typedef evhtp_res (*evhtp_hook_header_cb)(evhtp_request_t * req, evhtp_header_t * hdr, void * arg);
@@ -445,6 +447,7 @@ struct evhtp_connection_s {
     int8_t                       connected       : 1; /**< upstream connection status, for client */
     int8_t                       wait_4_write    : 1;
     int8_t                       free_connection : 1;
+    uint8_t                      keepalive       : 1; /**< set to 1 after the first request has been processed and the connection is kept open */
     struct ev_token_bucket_cfg * ratelimit_cfg;       /**< connection-specific ratelimiting configuration. */
 
     TAILQ_HEAD(, evhtp_request_s) pending;            /**< client pending data */
@@ -458,6 +461,7 @@ struct evhtp_hooks_s {
     evhtp_hook_read_cb            on_read;
     evhtp_hook_request_fini_cb    on_request_fini;
     evhtp_hook_connection_fini_cb on_connection_fini;
+    evhtp_hook_conn_err_cb        on_connection_error;
     evhtp_hook_err_cb             on_error;
     evhtp_hook_chunk_new_cb       on_new_chunk;
     evhtp_hook_chunk_fini_cb      on_chunk_fini;
@@ -473,6 +477,7 @@ struct evhtp_hooks_s {
     void * on_read_arg;
     void * on_request_fini_arg;
     void * on_connection_fini_arg;
+    void * on_connection_error_arg;
     void * on_error_arg;
     void * on_new_chunk_arg;
     void * on_chunk_fini_arg;
@@ -854,12 +859,16 @@ void evhtp_kvs_add_kvs(evhtp_kvs_t * dst, evhtp_kvs_t * src);
 
 int  evhtp_kvs_for_each(evhtp_kvs_t * kvs, evhtp_kvs_iterator cb, void * arg);
 
-#define EVHTP_PARSE_QUERY_FLAG_STRICT                       0
+#define EVHTP_PARSE_QUERY_FLAG_STRICT                 0
 #define EVHTP_PARSE_QUERY_FLAG_IGNORE_HEX             (1 << 0)
 #define EVHTP_PARSE_QUERY_FLAG_ALLOW_EMPTY_VALS       (1 << 1)
 #define EVHTP_PARSE_QUERY_FLAG_ALLOW_NULL_VALS        (1 << 2)
 #define EVHTP_PARSE_QUERY_FLAG_TREAT_SEMICOLON_AS_SEP (1 << 3)
-#define EVHTP_PARSE_QUERY_FLAG_LENIENT          (unsigned)(-1)
+#define EVHTP_PARSE_QUERY_FLAG_LENIENT        \
+    EVHTP_PARSE_QUERY_FLAG_IGNORE_HEX         \
+    | EVHTP_PARSE_QUERY_FLAG_ALLOW_EMPTY_VALS \
+    | EVHTP_PARSE_QUERY_FLAG_ALLOW_NULL_VALS  \
+    | EVHTP_PARSE_QUERY_FLAG_TREAT_SEMICOLON_AS_SEP
 
 /**
  * @brief Parses the query portion of the uri into a set of key/values
@@ -886,7 +895,6 @@ evhtp_query_t * evhtp_parse_query_wflags(const char * query, size_t len, int fla
  * @return evhtp_query_t * on success, NULL on error
  */
 evhtp_query_t * evhtp_parse_query(const char * query, size_t len);
-
 
 /**
  * @brief Unescapes strings like '%7B1,%202,%203%7D' would become '{1, 2, 3}'
@@ -1119,6 +1127,12 @@ int evhtp_connection_set_ratelimit(evhtp_connection_t * c, size_t read_rate,
 /*****************************************************************
 * client request functions                                      *
 *****************************************************************/
+
+/**
+ * @brief allocate a new connection
+ */
+evhtp_connection_t * evhtp_connection_new_dns(evbase_t * evbase, struct evdns_base * dns_base,
+                                              const char * addr, uint16_t port);
 
 /**
  * @brief allocate a new connection
